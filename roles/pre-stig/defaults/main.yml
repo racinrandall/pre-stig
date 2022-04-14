@@ -1,6 +1,6 @@
 ---
 # defaults file for pre-stig
-rhel8stig_custom_firewall_zone: usmint
+rhel8stig_custom_firewall_zone: chrandal
 rhel8stig_white_list_services:
   - https
   - http
