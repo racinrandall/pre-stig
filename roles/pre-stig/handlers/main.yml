@@ -1,0 +1,6 @@
+---
+# handlers file for pre-stig
+- name: dconf update
+  command: dconf update
+  when:
+      - "'dconf' in ansible_facts.packages"

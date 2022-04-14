@@ -1,0 +1,5 @@
+---
+- name: Run Pre-Stig Role
+  hosts: all
+  roles:
+    - pre-stig

@@ -1,0 +1,92 @@
+---
+# tasks file for pre-stig
+- name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems."
+  block:
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Set new zone"
+      template:
+        src: mintzone.xml.j2
+        dest: "/etc/firewalld/zones/{{ rhel8stig_custom_firewall_zone }}.xml"
+
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Reload zones"
+      command: firewall-cmd --reload
+      changed_when: rhel_08_040090_zone_reload_zone.rc == 0
+      failed_when: rhel_08_040090_zone_reload_zone.rc >= 2
+      register: rhel_08_040090_zone_reload_zone
+
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Allow internet and ssh"
+      firewalld:
+        zone: "{{ rhel8stig_custom_firewall_zone }}"
+        permanent: true
+        state: enabled
+        immediate: true
+        service: "{{ item }}"
+      with_items:
+            - "{{ rhel8stig_white_list_services }}"
+
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Allow internet and ssh"
+      firewalld:
+        zone: "{{ rhel8stig_custom_firewall_zone }}"
+        permanent: true
+        state: enabled
+        immediate: true
+        port: "{{ item }}"
+      with_items:
+            - "{{ rhel8stig_white_list_ports }}"
+      when: rhel8stig_white_list_ports is defined
+
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Allow ICMP"
+      firewalld:
+        zone: "{{ rhel8stig_custom_firewall_zone }}"
+        permanent: true
+        icmp_block_inversion: true
+        immediate: true
+        state: enabled
+
+
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Allow ICMP"
+      firewalld:
+        zone: "{{ rhel8stig_custom_firewall_zone }}"
+        permanent: true
+        icmp_block: "{{ item }}"
+        immediate: true
+        state: enabled
+      with_items:
+        - echo-reply
+        - echo-request
+
+    - name: "MEDIUM | RHEL-08-040090 | PATCH | A RHEL 8 firewall must employ a deny-all, allow-by-exception policy for allowing connections to other systems. | Set new zone as default"
+      command: "firewall-cmd --set-default-zone={{ rhel8stig_custom_firewall_zone }}"
+      changed_when: rhel_08_040090_default_zone_set.rc == 0
+      failed_when: rhel_08_040090_default_zone_set.rc >= 2
+      register: rhel_08_040090_default_zone_set
+  when:
+      - rhel_08_040090
+  tags:
+      - RHEL-08-040090
+      - CAT2
+      - CCI-002314
+      - SRG-OS-000297-GPOS-00115
+      - SV-230504r627750_rule
+      - V-230504
+      - firewall
+
+# This check got lost along the way in RHEL7, but is in RHEL8, so I backported it.
+- name: "MEDIUM | PATCH | RHEL 7 must disable the user list at logon for graphical user interfaces."
+  block:
+# This is needed to make sure dconf is installed
+  - name: Gather the package facts
+    package_facts:
+      manager: auto
+
+  - name: "MEDIUM | PATCH | RHEL 7 must disable the user list at logon for graphical user interfaces."
+    copy:
+      dest: /etc/dconf/db/local.d/02-login-screen
+      content: |
+          [org/gnome/login-screen]
+          disable-user-list=true
+      mode: '0644'
+    notify: dconf update
+    
+  when:
+      - rhel7stig_gui
+      - ansible_distribution_major_version == '7'

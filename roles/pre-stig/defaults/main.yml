@@ -1,0 +1,9 @@
+---
+# defaults file for pre-stig
+rhel8stig_custom_firewall_zone: usmint
+rhel8stig_white_list_services:
+  - https
+  - http
+  - ssh
+rhel_08_040090: true
+rhel7stig_gui: false
